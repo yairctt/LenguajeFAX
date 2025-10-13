@@ -12,7 +12,7 @@ public class AnalizadorLexico {
     private static List<ErrorLexico> errores = new ArrayList<>();
     
     public static void main(String[] args) throws Exception {
-        System.out.println("=== FASE LEXICA - ANALIZADOR DE TOKENS ===\n");
+        System.out.println("=== LENGUAJE FAX - FASE LEXICA ===\n");
         
         try {
             AnalizadorLexico analizador = new AnalizadorLexico(System.in);
@@ -213,12 +213,11 @@ public class AnalizadorLexico {
             estadisticas.put(t.tipo, estadisticas.getOrDefault(t.tipo, 0) + 1);
         }
         
-        System.out.println("\n=== ESTADISTICAS ===\n");
         System.out.println("Total de tokens validos: " + tokensEncontrados.size());
         System.out.println("Total de errores: " + errores.size());
         
         if (!estadisticas.isEmpty()) {
-            System.out.println("\nDistribucion por categoria:");
+            System.out.println("\nTipo de Token:");
             System.out.println("  " + "=".repeat(50));
             
             // Ordenar por nombre de categoría
