@@ -1,0 +1,5 @@
+inicio
+    entero x @ y;
+    x = 10 $ 5;
+    escribir(x # y);
+fin
