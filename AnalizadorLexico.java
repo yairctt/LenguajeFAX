@@ -261,7 +261,7 @@ public class AnalizadorLexico implements AnalizadorLexicoConstants {
             System.out.println("No se encontraron tokens\n");
         } else {
             System.out.println("=== TOKENS IDENTIFICADOS ===\n");
-            System.out.printf("%-4s %-30s %-20s %s\n", "N\u00b0", "TOKEN", "Lexema", "Posicion");
+            System.out.printf("%-4s %-30s %-20s %s\n", "N\u00b0", "Categoria", "Lexema", "Posicion");
             System.out.println("=".repeat(80));
 
             for (int i = 0; i < tokensEncontrados.size(); i++) {
