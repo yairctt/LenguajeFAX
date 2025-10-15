@@ -1,4 +1,7 @@
-entero x;
-real y;
-cadena nombre;
-logico activo;
+entero altura;
+"hola"
+
+"
+
+
+ 

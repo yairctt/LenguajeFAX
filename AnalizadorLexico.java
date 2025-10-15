@@ -8,7 +8,7 @@ public class AnalizadorLexico implements AnalizadorLexicoConstants {
     private static List<ErrorLexico> errores = new ArrayList<>();
 
     public static void main(String[] args) throws Exception {
-        System.out.println("=== LENGUAJE FAX - FASE LEXICA ===\n");
+        System.out.println("=== COMPILADOR - FASE LEXICA ===\n");
 
         try {
             AnalizadorLexico analizador = new AnalizadorLexico(System.in);
@@ -16,14 +16,14 @@ public class AnalizadorLexico implements AnalizadorLexicoConstants {
 
             if (errores.isEmpty()) {
                 System.out.println("FASE LEXICA: Completada correctamente\n");
-                mostrarEstadisticas();
+                mostrarTokens();
             } else {
                 System.out.println("FASE LEXICA: ERRORES ENCONTRADOS\n");
                 for (ErrorLexico error : errores) {
                     System.out.println(error);
                 }
                 System.out.println();
-                mostrarEstadisticas();
+                mostrarTokens();
                 System.exit(1);
             }
 
@@ -46,7 +46,15 @@ public class AnalizadorLexico implements AnalizadorLexicoConstants {
                 }
                 registrarToken(token);
             } catch (TokenMgrError e) {
-                manejarErrorLexico(e);
+                char caracterActual = '\0';
+                try {
+                    caracterActual = token_source.input_stream.BeginToken();
+                    token_source.input_stream.backup(1);
+                } catch (Exception ex) {
+
+                }
+
+                manejarErrorLexico(e, caracterActual);
                 try {
                     token_source.input_stream.readChar();
                 } catch (Exception ex) {
@@ -56,7 +64,7 @@ public class AnalizadorLexico implements AnalizadorLexicoConstants {
         }
     }
 
-    private void manejarErrorLexico(TokenMgrError e) {
+    private void manejarErrorLexico(TokenMgrError e, char caracterCapturado) {
         String mensaje = e.getMessage();
         int linea = 0;
         int columna = 0;
@@ -71,20 +79,65 @@ public class AnalizadorLexico implements AnalizadorLexicoConstants {
                 int puntoIndex = mensaje.indexOf(".", columnaIndex);
                 columna = Integer.parseInt(mensaje.substring(columnaIndex, puntoIndex).trim());
             } catch (Exception ex) {
-                // Si no podemos extraer la posición, usamos valores por defecto
             }
         }
 
         String caracterProblematico = "";
+
         if (mensaje.contains("Encountered: ")) {
-            int encuentroIndex = mensaje.indexOf("Encountered: ") + 13;
-            int parentesisIndex = mensaje.indexOf(" (", encuentroIndex);
-            if (parentesisIndex > encuentroIndex) {
-                caracterProblematico = mensaje.substring(encuentroIndex, parentesisIndex).trim();
+            try {
+                int encuentroIndex = mensaje.indexOf("Encountered: ") + 13;
+                String resto = mensaje.substring(encuentroIndex);
+
+                if (resto.startsWith("\"")) {
+                    int siguienteComilla = resto.indexOf("\"", 1);
+                    if (siguienteComilla > 0) {
+                        caracterProblematico = resto.substring(1, siguienteComilla);
+                    }
+                } else {
+                    int parentesisIndex = resto.indexOf(" (");
+                    if (parentesisIndex > 0) {
+                        caracterProblematico = resto.substring(0, parentesisIndex).trim();
+                    } else {
+                        int puntoIndex = resto.indexOf(".");
+                        if (puntoIndex > 0) {
+                            caracterProblematico = resto.substring(0, puntoIndex).trim();
+                        } else {
+                            caracterProblematico = resto.trim();
+                        }
+                    }
+                }
+
+                if (caracterProblematico.equals("<EOF>")) {
+                    if (caracterCapturado != '\0' && !Character.isWhitespace(caracterCapturado)) {
+                        caracterProblematico = "'" + caracterCapturado + "'";
+                    } else {
+                        try {
+                            char[] buffer = token_source.input_stream.GetSuffix(1);
+                            if (buffer != null && buffer.length > 0 && buffer[0] != '\0') {
+                                caracterProblematico = "'" + buffer[0] + "'";
+                            }
+                        } catch (Exception ex) {
+
+                        }
+                    }
+                }
+            } catch (Exception ex) {
+                caracterProblematico = "(desconocido)";
             }
         }
 
-        String mensajeError = "Token no reconocido: " + caracterProblematico;
+        //hasta aqui me quedo hoy
+        if ((caracterProblematico.isEmpty() || caracterProblematico.equals("<EOF>"))
+            && caracterCapturado != '\0' && !Character.isWhitespace(caracterCapturado)) {
+            caracterProblematico = "'" + caracterCapturado + "'";
+        }
+
+        if (caracterProblematico.isEmpty()) {
+            caracterProblematico = "(desconocido)";
+        }
+
+        String mensajeError = "Simbolo no reconocido: " + caracterProblematico;
         errores.add(new ErrorLexico(mensajeError, linea, columna));
     }
 
@@ -203,36 +256,12 @@ public class AnalizadorLexico implements AnalizadorLexicoConstants {
         }
     }
 
-    private static void mostrarEstadisticas() {
-        Map<String, Integer> estadisticas = new HashMap<>();
-        for (TokenInfo t : tokensEncontrados) {
-            estadisticas.put(t.tipo, estadisticas.getOrDefault(t.tipo, 0) + 1);
-        }
-
-        System.out.println("Total de tokens validos: " + tokensEncontrados.size());
-        System.out.println("Total de errores: " + errores.size());
-
-        if (!estadisticas.isEmpty()) {
-            System.out.println("\nTipo de Token:");
-            System.out.println("  " + "=".repeat(50));
-
-            // Ordenar por nombre de categoría
-            List<String> categorias = new ArrayList<>(estadisticas.keySet());
-            Collections.sort(categorias);
-
-            for (String categoria : categorias) {
-                System.out.printf("  %-30s : %3d\n", categoria, estadisticas.get(categoria));
-            }
-            System.out.println("  " + "=".repeat(50));
-        }
-    }
-
     private static void mostrarTokens() {
         if (tokensEncontrados.isEmpty()) {
             System.out.println("No se encontraron tokens\n");
         } else {
             System.out.println("=== TOKENS IDENTIFICADOS ===\n");
-            System.out.printf("%-4s %-30s %-20s %s\n", "N\u00ba", "Categoria", "Lexema", "Posicion");
+            System.out.printf("%-4s %-30s %-20s %s\n", "N\u00b0", "TOKEN", "Lexema", "Posicion");
             System.out.println("=".repeat(80));
 
             for (int i = 0; i < tokensEncontrados.size(); i++) {
@@ -242,6 +271,7 @@ public class AnalizadorLexico implements AnalizadorLexicoConstants {
             }
             System.out.println("=".repeat(80));
             System.out.println("Total: " + tokensEncontrados.size() + " tokens\n");
+            System.out.println("Total de errores: " + errores.size());
         }
     }
 
