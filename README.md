@@ -44,6 +44,9 @@ El proyecto es parte de un trabajo académico enfocado en **construcción de com
     java AnalizadorLexico < entrada.txt
     ```
 
+## Documentación (**FASE LEXICA**)
+- Manual de Usuario: https://drive.google.com/file/d/1qZhEb2UiSwG3yPitY--hHVnmXVV8Dx4F/view?usp=sharing
+- Manual Tecnico: https://drive.google.com/file/d/1fUL-_nxXkFZ0lJLFOTEe3-TXpli2OFU7/view?usp=sharing
 ---
 
 
