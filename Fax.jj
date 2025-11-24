@@ -13,7 +13,7 @@ public class Fax {
     private static boolean continuarAnalizando = true;
     
     public static void main(String[] args) throws Exception {
-        System.out.println("Iniciando compilación...\n");
+    System.out.println("Iniciando compilación...\n");
         try {
             Fax analizador = new Fax(System.in);
             analizador.Programa();
@@ -322,7 +322,7 @@ void CodigoOError() :
             t = getNextToken();
             agregarError("ERROR_SINTÁCTICO", t, 
                         "Token inesperado, se esperaba una declaración o sentencia");
-            avanzarHasta(new int[]{PUNTO_COMA, ENTERO, REAL, CADENA_T, LOGICO, ID, SI, MIENTRAS, PARA, LEER, ESCRIBIR, RETORNAR, FIN});
+            avanzarHasta(new int[]{PUNTO_COMA, ENTERO, REAL, CADENA_T, LOGICO, ID, SI, MIENTRAS, PARA, LEER, ESCRIBIR, RETORNAR, ROMPER, FIN});
             if (getToken(1).kind == PUNTO_COMA) {
                 getNextToken();
             }
@@ -383,6 +383,7 @@ void Sentencia() :
             | LOOKAHEAD(2) Switch()   
             | LOOKAHEAD(2) Ciclo()
             | LOOKAHEAD(2) Retorno()
+            | LOOKAHEAD(2) Romper() 
         )
     } catch (ParseException e) {
         agregarError("ERROR_SINTÁCTICO", e.currentToken.next, 
@@ -696,6 +697,23 @@ void Retorno() :
     }
 }
 
+void Romper() :
+{
+    Token sig;
+}
+{
+    <ROMPER>
+    
+    {
+        sig = getToken(1);
+        if (sig.kind != PUNTO_COMA) {
+            agregarError("ERROR_SINTÁCTICO", sig, "Se esperaba punto y coma (;)");
+        } else {
+            getNextToken();
+        }
+    }
+}
+
 void Expresion() :
 {}
 {
@@ -913,3 +931,4 @@ void CasoDefecto() :
         Sentencia()
     )*
 }
+
