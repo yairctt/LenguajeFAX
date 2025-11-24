@@ -13,6 +13,7 @@ public class Fax {
     private static boolean continuarAnalizando = true;
     
     public static void main(String[] args) throws Exception {
+        System.out.println("Iniciando compilación...\n");
         try {
             Fax analizador = new Fax(System.in);
             analizador.Programa();
@@ -114,7 +115,7 @@ public class Fax {
         erroresRegistrados.add(clave);
         String ubicacion = "Línea " + linea + ", Columna " + columna;
         String tokenTexto = "'" + caracter + "'";
-        errores.add(new ErrorInfo("ERROR_LEXICO", ubicacion, tokenTexto, "Carácter no reconocido", linea, columna));
+        errores.add(new ErrorInfo("ERROR_LÉXICO", ubicacion, tokenTexto, "Carácter no reconocido", linea, columna));
     }
     
     private void avanzarHasta(int[] tokensDeRecuperacion) {
@@ -251,7 +252,7 @@ void Programa() :
     try {
         <INICIO>
     } catch (ParseException e) {
-        agregarError("ERROR_SINTACTICO", e.currentToken.next, 
+        agregarError("ERROR_SINTÁCTICO", e.currentToken.next, 
                     "El programa debe iniciar con 'inicio'");
         avanzarHasta(new int[]{ENTERO, REAL, CADENA_T, LOGICO, ID, SI, MIENTRAS, PARA, LEER, ESCRIBIR, RETORNAR, FIN});
     }
@@ -264,7 +265,7 @@ void Programa() :
     {
         t = getToken(1);
         if (t.kind != FIN && t.kind != EOF) {
-            agregarError("ERROR_SINTACTICO", t, 
+            agregarError("ERROR_SINTÁCTICO", t, 
                         "Token inesperado, se esperaba 'fin'");
             tokenInesperadoAntesDelFin = true;
             while (t.kind != FIN && t.kind != EOF) {
@@ -280,7 +281,7 @@ void Programa() :
         <FIN>
     } catch (ParseException e) {
         if (!tokenInesperadoAntesDelFin) {
-            agregarError("ERROR_SINTACTICO", e.currentToken.next, 
+            agregarError("ERROR_SINTÁCTICO", e.currentToken.next, 
                         "El programa debe finalizar con 'fin'");
         }
     }
@@ -292,7 +293,7 @@ void Programa() :
             if (t.kind == CHAR_INVALIDO) {
                 // Ya fue registrado por el TOKEN handler
             } else {
-                agregarError("ERROR_SINTACTICO", t, 
+                agregarError("ERROR_SINTÁCTICO", t, 
                             "Token inesperado después de 'fin'");
             }
             t = getNextToken();
@@ -319,7 +320,7 @@ void CodigoOError() :
         t = getToken(1);
         if (t.kind != EOF && t.kind != FIN) {
             t = getNextToken();
-            agregarError("ERROR_SINTACTICO", t, 
+            agregarError("ERROR_SINTÁCTICO", t, 
                         "Token inesperado, se esperaba una declaración o sentencia");
             avanzarHasta(new int[]{PUNTO_COMA, ENTERO, REAL, CADENA_T, LOGICO, ID, SI, MIENTRAS, PARA, LEER, ESCRIBIR, RETORNAR, FIN});
             if (getToken(1).kind == PUNTO_COMA) {
@@ -384,7 +385,7 @@ void Sentencia() :
             | LOOKAHEAD(2) Retorno()
         )
     } catch (ParseException e) {
-        agregarError("ERROR_SINTACTICO", e.currentToken.next, 
+        agregarError("ERROR_SINTÁCTICO", e.currentToken.next, 
                     "Sentencia no reconocida");
         avanzarHasta(new int[]{PUNTO_COMA, LLAVE_CIERRA, ID, SI, MIENTRAS, PARA, LEER, ESCRIBIR, RETORNAR});
         if (getToken(1).kind == PUNTO_COMA) {
@@ -406,7 +407,7 @@ void Asignacion() :
     try {
         <ASIG>
     } catch (ParseException e) {
-        agregarError("ERROR_SINTACTICO", e.currentToken.next, 
+        agregarError("ERROR_SINTÁCTICO", e.currentToken.next, 
                     "Se requiere operador de asignación (=)");
         avanzarHasta(new int[]{PUNTO_COMA, NUM_ENTERO, NUM_REAL, CADENA, ID, PAR_ABRE});
     }
@@ -414,7 +415,7 @@ void Asignacion() :
     try {
         Expresion()
     } catch (ParseException e) {
-        agregarError("ERROR_SINTACTICO", e.currentToken.next, 
+        agregarError("ERROR_SINTÁCTICO", e.currentToken.next, 
                     "Expresión inválida en asignación");
         avanzarHasta(new int[]{PUNTO_COMA});
     }
@@ -422,7 +423,7 @@ void Asignacion() :
     {
         sig = getToken(1);
         if (sig.kind != PUNTO_COMA) {
-            agregarError("ERROR_SINTACTICO", sig, "Se esperaba punto y coma (;)");
+            agregarError("ERROR_SINTÁCTICO", sig, "Se esperaba punto y coma (;)");
         } else {
             getNextToken();
         }
@@ -444,7 +445,7 @@ void LecturaEscritura() :
             )
             <PAR_CIERRA>
         } catch (ParseException e) {
-            agregarError("ERROR_SINTACTICO", e.currentToken.next, 
+            agregarError("ERROR_SINTÁCTICO", e.currentToken.next, 
                         "Formato incorrecto: debe ser leer(variable);");
             avanzarHasta(new int[]{PUNTO_COMA});
         }
@@ -452,7 +453,7 @@ void LecturaEscritura() :
         {
             sig = getToken(1);
             if (sig.kind != PUNTO_COMA) {
-                agregarError("ERROR_SINTACTICO", sig, "Se esperaba punto y coma (;)");
+                agregarError("ERROR_SINTÁCTICO", sig, "Se esperaba punto y coma (;)");
             } else {
                 getNextToken();
             }
@@ -467,7 +468,7 @@ void LecturaEscritura() :
             ( <COMA> Expresion() )*
             <PAR_CIERRA>
         } catch (ParseException e) {
-            agregarError("ERROR_SINTACTICO", e.currentToken.next, 
+            agregarError("ERROR_SINTÁCTICO", e.currentToken.next, 
                         "Error en sintaxis de 'escribir'");
             avanzarHasta(new int[]{PUNTO_COMA});
         }
@@ -475,7 +476,7 @@ void LecturaEscritura() :
         {
             sig = getToken(1);
             if (sig.kind != PUNTO_COMA) {
-                agregarError("ERROR_SINTACTICO", sig, "Se esperaba punto y coma (;)");
+                agregarError("ERROR_SINTÁCTICO", sig, "Se esperaba punto y coma (;)");
             } else {
                 getNextToken();
             }
@@ -495,7 +496,7 @@ void Condicional() :
         ExpresionLogica()
         <PAR_CIERRA>
     } catch (ParseException e) {
-        agregarError("ERROR_SINTACTICO", e.currentToken.next, 
+        agregarError("ERROR_SINTÁCTICO", e.currentToken.next, 
                     "Condición mal formada en 'si'");
         avanzarHasta(new int[]{ENTONCES, LLAVE_ABRE});
     }
@@ -503,7 +504,7 @@ void Condicional() :
     {
         sig = getToken(1);
         if (sig.kind != ENTONCES) {
-            agregarError("ERROR_SINTACTICO", sig, "Falta 'entonces' tras la condición");
+            agregarError("ERROR_SINTÁCTICO", sig, "Falta 'entonces' tras la condición");
         } else {
             getNextToken();
         }
@@ -512,7 +513,7 @@ void Condicional() :
     {
         sig = getToken(1);
         if (sig.kind != LLAVE_ABRE) {
-            agregarError("ERROR_SINTACTICO", sig, "Se esperaba '{'");
+            agregarError("ERROR_SINTÁCTICO", sig, "Se esperaba '{'");
         } else {
             getNextToken();
         }
@@ -526,7 +527,7 @@ void Condicional() :
     {
         sig = getToken(1);
         if (sig.kind != LLAVE_CIERRA) {
-            agregarError("ERROR_SINTACTICO", sig, "Se esperaba '}'");
+            agregarError("ERROR_SINTÁCTICO", sig, "Se esperaba '}'");
         } else {
             getNextToken();
         }
@@ -539,7 +540,7 @@ void Condicional() :
         {
             sig = getToken(1);
             if (sig.kind != LLAVE_ABRE) {
-                agregarError("ERROR_SINTACTICO", sig, "Se esperaba '{'");
+                agregarError("ERROR_SINTÁCTICO", sig, "Se esperaba '{'");
             } else {
                 getNextToken();
             }
@@ -553,7 +554,7 @@ void Condicional() :
         {
             sig = getToken(1);
             if (sig.kind != LLAVE_CIERRA) {
-                agregarError("ERROR_SINTACTICO", sig, "Se esperaba '}'");
+                agregarError("ERROR_SINTÁCTICO", sig, "Se esperaba '}'");
             } else {
                 getNextToken();
             }
@@ -580,7 +581,7 @@ void CicloMientras() :
         ExpresionLogica()
         <PAR_CIERRA>
     } catch (ParseException e) {
-        agregarError("ERROR_SINTACTICO", e.currentToken.next, 
+        agregarError("ERROR_SINTÁCTICO", e.currentToken.next, 
                     "Condición incorrecta en 'mientras'");
         avanzarHasta(new int[]{HACER, LLAVE_ABRE});
     }
@@ -588,7 +589,7 @@ void CicloMientras() :
     {
         sig = getToken(1);
         if (sig.kind != HACER) {
-            agregarError("ERROR_SINTACTICO", sig, "Se esperaba 'hacer'");
+            agregarError("ERROR_SINTÁCTICO", sig, "Se esperaba 'hacer'");
         } else {
             getNextToken();
         }
@@ -597,7 +598,7 @@ void CicloMientras() :
     {
         sig = getToken(1);
         if (sig.kind != LLAVE_ABRE) {
-            agregarError("ERROR_SINTACTICO", sig, "Se esperaba '{'");
+            agregarError("ERROR_SINTÁCTICO", sig, "Se esperaba '{'");
         } else {
             getNextToken();
         }
@@ -611,7 +612,7 @@ void CicloMientras() :
     {
         sig = getToken(1);
         if (sig.kind != LLAVE_CIERRA) {
-            agregarError("ERROR_SINTACTICO", sig, "Se esperaba '}'");
+            agregarError("ERROR_SINTÁCTICO", sig, "Se esperaba '}'");
         } else {
             getNextToken();
         }
@@ -632,7 +633,7 @@ void CicloPara() :
         <ID> <ASIG> Expresion()
         <PAR_CIERRA>
     } catch (ParseException e) {
-        agregarError("ERROR_SINTACTICO", e.currentToken.next, 
+        agregarError("ERROR_SINTÁCTICO", e.currentToken.next, 
                     "Estructura incorrecta en ciclo 'para'");
         avanzarHasta(new int[]{HACER, LLAVE_ABRE});
     }
@@ -640,7 +641,7 @@ void CicloPara() :
     {
         sig = getToken(1);
         if (sig.kind != HACER) {
-            agregarError("ERROR_SINTACTICO", sig, "Se esperaba 'hacer'");
+            agregarError("ERROR_SINTÁCTICO", sig, "Se esperaba 'hacer'");
         } else {
             getNextToken();
         }
@@ -649,7 +650,7 @@ void CicloPara() :
     {
         sig = getToken(1);
         if (sig.kind != LLAVE_ABRE) {
-            agregarError("ERROR_SINTACTICO", sig, "Se esperaba '{'");
+            agregarError("ERROR_SINTÁCTICO", sig, "Se esperaba '{'");
         } else {
             getNextToken();
         }
@@ -663,7 +664,7 @@ void CicloPara() :
     {
         sig = getToken(1);
         if (sig.kind != LLAVE_CIERRA) {
-            agregarError("ERROR_SINTACTICO", sig, "Se esperaba '}'");
+            agregarError("ERROR_SINTÁCTICO", sig, "Se esperaba '}'");
         } else {
             getNextToken();
         }
@@ -680,7 +681,7 @@ void Retorno() :
     try {
         Expresion()
     } catch (ParseException e) {
-        agregarError("ERROR_SINTACTICO", e.currentToken.next, 
+        agregarError("ERROR_SINTÁCTICO", e.currentToken.next, 
                     "Expresión de retorno inválida");
         avanzarHasta(new int[]{PUNTO_COMA});
     }
@@ -688,7 +689,7 @@ void Retorno() :
     {
         sig = getToken(1);
         if (sig.kind != PUNTO_COMA) {
-            agregarError("ERROR_SINTACTICO", sig, "Se esperaba punto y coma (;)");
+            agregarError("ERROR_SINTÁCTICO", sig, "Se esperaba punto y coma (;)");
         } else {
             getNextToken();
         }
@@ -710,7 +711,7 @@ void ExpresionLogica() :
         try {
             ExpresionRelacional()
         } catch (ParseException e) {
-            agregarError("ERROR_SINTACTICO", e.currentToken.next, 
+            agregarError("ERROR_SINTÁCTICO", e.currentToken.next, 
                         "Error en operación lógica");
             avanzarHasta(new int[]{PUNTO_COMA, PAR_CIERRA, LLAVE_CIERRA});
         }
@@ -726,7 +727,7 @@ void ExpresionRelacional() :
         try {
             ExpresionAritmetica()
         } catch (ParseException e) {
-            agregarError("ERROR_SINTACTICO", e.currentToken.next, 
+            agregarError("ERROR_SINTÁCTICO", e.currentToken.next, 
                         "Error en comparación");
             avanzarHasta(new int[]{PUNTO_COMA, PAR_CIERRA, LLAVE_CIERRA, AND, OR});
         }
@@ -742,7 +743,7 @@ void ExpresionAritmetica() :
         try {
             Termino()
         } catch (ParseException e) {
-            agregarError("ERROR_SINTACTICO", e.currentToken.next, 
+            agregarError("ERROR_SINTÁCTICO", e.currentToken.next, 
                         "Error en operación aritmética");
             avanzarHasta(new int[]{PUNTO_COMA, PAR_CIERRA, LLAVE_CIERRA});
         }
@@ -758,7 +759,7 @@ void Termino() :
         try {
             Factor()
         } catch (ParseException e) {
-            agregarError("ERROR_SINTACTICO", e.currentToken.next, 
+            agregarError("ERROR_SINTÁCTICO", e.currentToken.next, 
                         "Error en multiplicación/división");
             avanzarHasta(new int[]{PUNTO_COMA, PAR_CIERRA, LLAVE_CIERRA, SUMA, RESTA});
         }
@@ -781,7 +782,7 @@ void Factor() :
             | <NOT> Factor()
         )
     } catch (ParseException e) {
-        agregarError("ERROR_SINTACTICO", e.currentToken.next, 
+        agregarError("ERROR_SINTÁCTICO", e.currentToken.next, 
                     "Factor no válido");
         avanzarHasta(new int[]{PUNTO_COMA, PAR_CIERRA, LLAVE_CIERRA, SUMA, RESTA, MULTIPLICA, DIVIDE});
     }
@@ -798,7 +799,7 @@ void AccesoArreglo() :
     try {
         Expresion()
     } catch (ParseException e) {
-        agregarError("ERROR_SINTACTICO", e.currentToken.next, 
+        agregarError("ERROR_SINTÁCTICO", e.currentToken.next, 
                     "Índice inválido en vector/matriz");
         avanzarHasta(new int[]{COR_CIERRA});
     }
@@ -811,7 +812,7 @@ void AccesoArreglo() :
         try {
             Expresion()
         } catch (ParseException e) {
-            agregarError("ERROR_SINTACTICO", e.currentToken.next, 
+            agregarError("ERROR_SINTÁCTICO", e.currentToken.next, 
                         "Índice inválido en matriz");
             avanzarHasta(new int[]{COR_CIERRA});
         }
@@ -831,7 +832,7 @@ void Switch() :
         Expresion()
         <PAR_CIERRA>
     } catch (ParseException e) {
-        agregarError("ERROR_SINTACTICO", e.currentToken.next, 
+        agregarError("ERROR_SINTÁCTICO", e.currentToken.next, 
                     "Expresión mal formada en 'segun'");
         avanzarHasta(new int[]{LLAVE_ABRE});
     }
@@ -839,7 +840,7 @@ void Switch() :
     {
         sig = getToken(1);
         if (sig.kind != LLAVE_ABRE) {
-            agregarError("ERROR_SINTACTICO", sig, "Se esperaba '{'");
+            agregarError("ERROR_SINTÁCTICO", sig, "Se esperaba '{'");
         } else {
             getNextToken();
         }
@@ -858,7 +859,7 @@ void Switch() :
     {
         sig = getToken(1);
         if (sig.kind != LLAVE_CIERRA) {
-            agregarError("ERROR_SINTACTICO", sig, "Se esperaba '}'");
+            agregarError("ERROR_SINTÁCTICO", sig, "Se esperaba '}'");
         } else {
             getNextToken();
         }
@@ -876,7 +877,7 @@ void Caso() :
         Expresion()
         <DOS_PUNTOS>
     } catch (ParseException e) {
-        agregarError("ERROR_SINTACTICO", e.currentToken.next, 
+        agregarError("ERROR_SINTÁCTICO", e.currentToken.next, 
                     "Formato incorrecto en 'caso'");
         avanzarHasta(new int[]{DOS_PUNTOS, LLAVE_ABRE});
     }
@@ -893,7 +894,7 @@ void Caso() :
         {
             sig = getToken(1);
             if (sig.kind != PUNTO_COMA) {
-                agregarError("ERROR_SINTACTICO", sig, "Se esperaba punto y coma (;)");
+                agregarError("ERROR_SINTÁCTICO", sig, "Se esperaba punto y coma (;)");
             } else {
                 getNextToken();
             }
