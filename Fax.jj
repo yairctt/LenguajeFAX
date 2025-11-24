@@ -187,6 +187,11 @@ TOKEN: { <FIN: "fin"> }
 TOKEN: { <FUNCION: "funcion"> }
 TOKEN: { <RETORNAR: "retornar"> }
 
+TOKEN: { <SEGUN: "segun"> }
+TOKEN: { <CASO: "caso"> }
+TOKEN: { <DEFECTO: "defecto"> }
+TOKEN: { <ROMPER: "romper"> }
+
 TOKEN: { <AND: "&&"> }
 TOKEN: { <OR: "||"> }
 TOKEN: { <NOT: "!"> }
@@ -326,38 +331,33 @@ void CodigoOError() :
 
 void Declaracion() :
 {
-    Token tipo, id, siguiente;
+    Token tipo, id;
 }
 {
     tipo = TipoDato()
+    id = <ID>
     
-    try {
-        id = <ID>
-    } catch (ParseException e) {
-        agregarError("ERROR_SINTACTICO", e.currentToken.next, 
-                    "Falta identificador tras el tipo de dato");
-        avanzarHasta(new int[]{PUNTO_COMA, ASIG});
-    }
-    
+    // Verificar si es vector o matriz
     (
-        <ASIG>
-        try {
-            Expresion()
-        } catch (ParseException e) {
-            agregarError("ERROR_SINTACTICO", e.currentToken.next, 
-                        "Expresión de asignación incorrecta");
-            avanzarHasta(new int[]{PUNTO_COMA});
-        }
+        <COR_ABRE>
+        <NUM_ENTERO>
+        <COR_CIERRA>
+        
+        // Verificar si es matriz (segunda dimensión)
+        (
+            <COR_ABRE>
+            <NUM_ENTERO>
+            <COR_CIERRA>
+        )?
     )?
     
-    {
-        siguiente = getToken(1);
-        if (siguiente.kind != PUNTO_COMA) {
-            agregarError("ERROR_SINTACTICO", siguiente, "Se esperaba punto y coma (;)");
-        } else {
-            getNextToken();
-        }
-    }
+    // Inicialización opcional
+    (
+        <ASIG>
+        Expresion()
+    )?
+    
+    <PUNTO_COMA>
 }
 
 Token TipoDato() :
@@ -379,6 +379,7 @@ void Sentencia() :
             LOOKAHEAD(2) Asignacion()
             | LOOKAHEAD(2) LecturaEscritura()
             | LOOKAHEAD(2) Condicional()
+            | LOOKAHEAD(2) Switch()   
             | LOOKAHEAD(2) Ciclo()
             | LOOKAHEAD(2) Retorno()
         )
@@ -397,7 +398,10 @@ void Asignacion() :
     Token id, sig;
 }
 {
-    id = <ID>
+    (
+        LOOKAHEAD(2) AccesoArreglo()  // ← Asignación a elemento de vector/matriz
+        | <ID>                         // ← Asignación a variable simple
+    )
     
     try {
         <ASIG>
@@ -434,7 +438,10 @@ void LecturaEscritura() :
         <LEER>
         try {
             <PAR_ABRE>
-            <ID>
+            (
+                LOOKAHEAD(2) AccesoArreglo()  // ← NUEVO: permite leer(vector[i])
+                | <ID>                         // ← O variable simple
+            )
             <PAR_CIERRA>
         } catch (ParseException e) {
             agregarError("ERROR_SINTACTICO", e.currentToken.next, 
@@ -768,6 +775,7 @@ void Factor() :
             | <CADENA>
             | <VERDADERO>
             | <FALSO>
+            | LOOKAHEAD(2) AccesoArreglo()  // ← NUEVO
             | <ID>
             | <PAR_ABRE> Expresion() <PAR_CIERRA>
             | <NOT> Factor()
@@ -777,4 +785,130 @@ void Factor() :
                     "Factor no válido");
         avanzarHasta(new int[]{PUNTO_COMA, PAR_CIERRA, LLAVE_CIERRA, SUMA, RESTA, MULTIPLICA, DIVIDE});
     }
+}
+
+// Nueva regla para acceso a vectores y matrices
+void AccesoArreglo() :
+{
+    Token sig;
+}
+{
+    <ID>
+    <COR_ABRE>
+    try {
+        Expresion()
+    } catch (ParseException e) {
+        agregarError("ERROR_SINTACTICO", e.currentToken.next, 
+                    "Índice inválido en vector/matriz");
+        avanzarHasta(new int[]{COR_CIERRA});
+    }
+    <COR_CIERRA>
+    
+    // Segunda dimensión (opcional, para matrices)
+    (
+        LOOKAHEAD(2)
+        <COR_ABRE>
+        try {
+            Expresion()
+        } catch (ParseException e) {
+            agregarError("ERROR_SINTACTICO", e.currentToken.next, 
+                        "Índice inválido en matriz");
+            avanzarHasta(new int[]{COR_CIERRA});
+        }
+        <COR_CIERRA>
+    )?
+}
+
+void Switch() :
+{
+    Token sig;
+}
+{
+    <SEGUN>
+    
+    try {
+        <PAR_ABRE>
+        Expresion()
+        <PAR_CIERRA>
+    } catch (ParseException e) {
+        agregarError("ERROR_SINTACTICO", e.currentToken.next, 
+                    "Expresión mal formada en 'segun'");
+        avanzarHasta(new int[]{LLAVE_ABRE});
+    }
+    
+    {
+        sig = getToken(1);
+        if (sig.kind != LLAVE_ABRE) {
+            agregarError("ERROR_SINTACTICO", sig, "Se esperaba '{'");
+        } else {
+            getNextToken();
+        }
+    }
+    
+    (
+        LOOKAHEAD(2)
+        Caso()
+    )*
+    
+    (
+        LOOKAHEAD(2)
+        CasoDefecto()
+    )?
+    
+    {
+        sig = getToken(1);
+        if (sig.kind != LLAVE_CIERRA) {
+            agregarError("ERROR_SINTACTICO", sig, "Se esperaba '}'");
+        } else {
+            getNextToken();
+        }
+    }
+}
+
+void Caso() :
+{
+    Token sig;
+}
+{
+    <CASO>
+    
+    try {
+        Expresion()
+        <DOS_PUNTOS>
+    } catch (ParseException e) {
+        agregarError("ERROR_SINTACTICO", e.currentToken.next, 
+                    "Formato incorrecto en 'caso'");
+        avanzarHasta(new int[]{DOS_PUNTOS, LLAVE_ABRE});
+    }
+    
+    (
+        LOOKAHEAD({getToken(1).kind != CASO && getToken(1).kind != DEFECTO && 
+                   getToken(1).kind != LLAVE_CIERRA && getToken(1).kind != EOF})
+        Sentencia()
+    )*
+    
+    (
+        LOOKAHEAD(2)
+        <ROMPER>
+        {
+            sig = getToken(1);
+            if (sig.kind != PUNTO_COMA) {
+                agregarError("ERROR_SINTACTICO", sig, "Se esperaba punto y coma (;)");
+            } else {
+                getNextToken();
+            }
+        }
+    )?
+}
+
+void CasoDefecto() :
+{}
+{
+    <DEFECTO>
+    <DOS_PUNTOS>
+    
+    (
+        LOOKAHEAD({getToken(1).kind != LLAVE_CIERRA && getToken(1).kind != EOF})
+        Sentencia()
+    )*
 }
