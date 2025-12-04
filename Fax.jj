@@ -332,11 +332,22 @@ void CodigoOError() :
 
 void Declaracion() :
 {
-    Token tipo, id;
+    Token tipo, id, siguiente;
 }
 {
     tipo = TipoDato()
-    id = <ID>
+    
+    try {
+        id = <ID>
+    } catch (ParseException e) {
+        agregarError("ERROR_SINTÁCTICO", e.currentToken.next, 
+                    "Falta identificador tras el tipo de dato");
+        avanzarHasta(new int[]{PUNTO_COMA, ENTERO, REAL, CADENA_T, LOGICO});
+        if (getToken(1).kind == PUNTO_COMA) {
+            getNextToken();
+        }
+        return; // ← Salir temprano para evitar más errores
+    }
     
     // Verificar si es vector o matriz
     (
@@ -344,7 +355,6 @@ void Declaracion() :
         <NUM_ENTERO>
         <COR_CIERRA>
         
-        // Verificar si es matriz (segunda dimensión)
         (
             <COR_ABRE>
             <NUM_ENTERO>
@@ -355,10 +365,34 @@ void Declaracion() :
     // Inicialización opcional
     (
         <ASIG>
-        Expresion()
+        try {
+            Expresion()
+        } catch (ParseException e) {
+            agregarError("ERROR_SINTÁCTICO", e.currentToken.next, 
+                        "Expresión de asignación incorrecta");
+            avanzarHasta(new int[]{PUNTO_COMA});
+        }
     )?
     
-    <PUNTO_COMA>
+    // Manejo mejorado del punto y coma
+    try {
+        <PUNTO_COMA>
+    } catch (ParseException e) {
+        siguiente = getToken(1);
+        agregarError("ERROR_SINTÁCTICO", e.currentToken, 
+                    "Falta punto y coma (;) después de la declaración");
+        // NO consumir el siguiente token si es una palabra clave
+        if (siguiente.kind != ENTERO && siguiente.kind != REAL && 
+            siguiente.kind != CADENA_T && siguiente.kind != LOGICO &&
+            siguiente.kind != SI && siguiente.kind != MIENTRAS &&
+            siguiente.kind != PARA && siguiente.kind != FIN) {
+            avanzarHasta(new int[]{PUNTO_COMA, ENTERO, REAL, CADENA_T, LOGICO, FIN});
+            if (getToken(1).kind == PUNTO_COMA) {
+                getNextToken();
+            }
+        }
+        // Si el siguiente token es una palabra clave, dejarlo para el siguiente parseo
+    }
 }
 
 Token TipoDato() :
@@ -386,9 +420,19 @@ void Sentencia() :
             | LOOKAHEAD(2) Romper() 
         )
     } catch (ParseException e) {
-        agregarError("ERROR_SINTÁCTICO", e.currentToken.next, 
+        Token t = e.currentToken.next;
+        agregarError("ERROR_SINTÁCTICO", t, 
                     "Sentencia no reconocida");
-        avanzarHasta(new int[]{PUNTO_COMA, LLAVE_CIERRA, ID, SI, MIENTRAS, PARA, LEER, ESCRIBIR, RETORNAR});
+        
+        // Consumir el token problemático para no quedar atascado
+        if (t.kind != EOF && t.kind != LLAVE_CIERRA) {
+            getNextToken();
+        }
+        
+        // Avanzar hasta punto seguro
+        avanzarHasta(new int[]{PUNTO_COMA, LLAVE_CIERRA, ID, SI, SEGUN, MIENTRAS, PARA, LEER, ESCRIBIR, RETORNAR, FIN, EOF});
+        
+        // Consumir el punto y coma si lo encontramos
         if (getToken(1).kind == PUNTO_COMA) {
             getNextToken();
         }
